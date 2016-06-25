@@ -1,0 +1,105 @@
+<html>
+<head>
+	<title>2nd EU Referendum API</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+	<h1 class='title'>2nd EU Referendum</h1>
+	<p class='count'>Fetching signatures...</p>
+
+	<div class='votes'>
+		<h2 class='votes__title'>Top 10</h2>
+	</div>
+
+	<script type="text/javascript">
+		var data,
+			title = document.querySelector('.title'),
+			count = document.querySelector('.count'),
+			url = 'https://petition.parliament.uk/petitions/131215.json',
+			votes = document.querySelector('.votes'),
+			orderedSignatures,
+			highestSignatures;
+
+		init();
+
+		function init() {
+			getSignatures();
+		}
+
+		function getSignatures() {
+			ajax(url)
+			.then(function(e) {
+				data = parseJSON(e.request);
+				setTitle(data['data']['attributes']['signature_count']);
+				orderedSignatures = orderSignatures(data['data']['attributes']['signatures_by_country']);
+				hightestSignatures = orderedSignatures.slice(orderedSignatures.length - 10);
+				
+				setSignatures();
+			})
+			.catch(function(error) {
+				console.log(error);
+			})
+		}
+
+		function setSignatures() {
+			for (var i = hightestSignatures.length - 1; i > -1; i--) {
+				var vote = document.createElement('p');
+				vote.className = 'vote';
+				
+				var country = document.createElement('div');
+				country.innerHTML = hightestSignatures[i]['name'];
+				country.className = 'vote__country';
+
+				var signature_count = document.createElement('div');
+				signature_count.innerHTML = hightestSignatures[i]['signature_count'];
+				signature_count.className = 'vote__count';
+
+				vote.appendChild(country);
+				vote.appendChild(signature_count);
+
+				votes.appendChild(vote);
+			}			
+		}
+
+		function orderSignatures(data) {
+			return data.sort(function(a, b) {
+				return parseInt(a.signature_count) - parseInt(b.signature_count);
+			});
+		}
+
+		function ajax(url) {
+		    return new Promise(function(resolve, reject) {
+		        var request = new XMLHttpRequest();
+		        request.onreadystatechange = function(e) {
+		            if (request.readyState === 4) {
+		                request.onreadystatechange = null;
+		                if (request.status === 200) {
+		                    resolve({
+		                        "event": e,
+		                        "request": request
+		                    });
+		                } else {
+		                    reject({
+		                        "event": e,
+		                        "request": request
+		                    });
+		                }
+		            }
+		        };
+
+		        request.open("GET", url);
+		        request.send(null);
+		    });
+		}
+
+		function parseJSON(data) {
+			return JSON.parse(data.response)
+		}
+
+		function setTitle(value) {
+			count.innerHTML = value + ' signatures';
+		}
+	</script>
+</body>
+</html>
+
